@@ -2,28 +2,24 @@ FROM golang:1.12-alpine3.10
 
 ENV OPENCV_VERSION=4.1.1
 ENV BUILD="ca-certificates \
-         git \
-         build-base \
-         musl-dev \
+         musl \
          alpine-sdk \
          make \
-         g++ \
          gcc \
          libc-dev \
          linux-headers \
          libjpeg-turbo \
          libpng \
          tiff \
+         pkgconf \
          openblas"
+ENV IMG_MAGICK_BUILD="pkgconfig libx11 lcms2 libbz2 glib libintl"
 
-ENV DEV="clang clang-dev cmake pkgconf \
-         openblas-dev libjpeg-turbo-dev \
-         libpng-dev tiff-dev \
-         "
-
-ENV IMG_MAGICK_BUILD="build-base gcc git wget pkgconfig"
-ENV IMG_MAGICK_DEV="jpeg-dev tiff-dev \
-         giflib-dev libx11-dev"
+ENV DEV="binutils \
+         clang clang-dev g++ cmake git wget \
+         openblas-dev musl-dev libjpeg-turbo-dev \
+         libpng-dev tiff-dev"
+ENV IMG_MAGICK_DEV="jpeg-dev tiff-dev giflib-dev glib-dev libx11-dev lcms2-dev patch"
 
 ENV PKG_CONFIG_PATH /usr/local/lib64/pkgconfig
 ENV LD_LIBRARY_PATH /usr/local/lib64
@@ -34,8 +30,8 @@ ENV IMAGEMAGICK_VERSION=6.9.10-65
 ENV UFRAW_VERSION="0.22"
 COPY ufraw.patch /
 RUN apk update && \
-    apk add --no-cache ${BUILD} ${DEV} ${IMG_MAGICK_DEV} glib-dev lcms2-dev patch && \
-    apk add --virtual build-dependencies ${IMG_MAGICK_BUILD} && \
+    apk add --no-cache ${BUILD} ${IMG_MAGICK_BUILD} && \
+    apk add --virtual dev-dependencies --no-cache ${DEV} ${IMG_MAGICK_DEV} && \
     mkdir /tmp/opencv && \
     cd /tmp/opencv && \
     wget -O opencv.zip https://github.com/opencv/opencv/archive/${OPENCV_VERSION}.zip && \
@@ -66,8 +62,9 @@ RUN apk update && \
     cd && rm -rf /tmp/opencv && \
     go get -u -d gocv.io/x/gocv && go run ${GOPATH}/src/gocv.io/x/gocv/cmd/version/main.go && \
     cd && \
-	wget https://github.com/ImageMagick/ImageMagick6/archive/${IMAGEMAGICK_VERSION}.tar.gz && \
-	tar xvzf ${IMAGEMAGICK_VERSION}.tar.gz && \
+        mkdir /tmp/imagick && cd /tmp/imagick && \
+	wget -O imagick.tar.gz https://github.com/ImageMagick/ImageMagick6/archive/${IMAGEMAGICK_VERSION}.tar.gz && \
+	tar xvzf imagick.tar.gz && \
 	cd ImageMagick* && \
 	./configure \
 	    --without-magick-plus-plus \
@@ -77,15 +74,13 @@ RUN apk update && \
 	    --disable-docs && \
 	make -j$(nproc) && make install && \
 	ldconfig /usr/local/lib && \
-    cd && rm -rf ImageMagick* && \
+    cd / && rm -rf /tmp/imagick && \
     curl -s --fail -L https://sourceforge.net/projects/ufraw/files/ufraw/ufraw-${UFRAW_VERSION}/ufraw-${UFRAW_VERSION}.tar.gz/download | tar -C /opt -xz && \
-    patch /opt/ufraw-${UFRAW_VERSION}/dcraw.cc /ufraw.patch && \
-    cd /opt/ufraw-${UFRAW_VERSION} && \
-    ./configure --prefix=/usr/local --disable-dependency-tracking --without-gtk --without-gimp && \
-    make && \
-    make install && \
-    cd / && \
-    rm -rf /opt/ufraw-${UFRAW_VERSION} && \
-    apk del ${DEV_DEPS} && \
-    apk del build-dependencies  && \
+         patch /opt/ufraw-${UFRAW_VERSION}/dcraw.cc /ufraw.patch && \
+         cd /opt/ufraw-${UFRAW_VERSION} && \
+         ./configure --prefix=/usr/local --disable-dependency-tracking --without-gtk --without-gimp && \
+         make && \
+         make install && \
+    cd / && rm -rf /opt/ufraw-${UFRAW_VERSION} && \
+    apk del dev-dependencies && \
     rm -rf /var/cache/apk/*
