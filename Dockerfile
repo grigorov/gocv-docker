@@ -26,7 +26,7 @@ ENV LD_LIBRARY_PATH /usr/local/lib64
 ENV CGO_CPPFLAGS -I/usr/local/include
 ENV CGO_CXXFLAGS "--std=c++1z"
 ENV CGO_LDFLAGS "-L/usr/local/lib -lopencv_core -lopencv_face -lopencv_imgproc -lopencv_imgcodecs"
-ENV IMAGEMAGICK_VERSION=6.9.10-65
+ENV IMAGEMAGICK_VERSION=6.9.8-3
 ENV UFRAW_VERSION="0.22"
 COPY ufraw.patch /
 RUN apk update && \

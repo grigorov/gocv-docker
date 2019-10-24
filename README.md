@@ -5,7 +5,7 @@ Go 1.12 (alpine 3.10)
 
 opencv 4.1.1 - https://github.com/opencv/opencv/
 
-imagemagick 6.9.10-65 - https://github.com/ImageMagick/ImageMagick6
+imagemagick 6.9.8-3 - https://github.com/ImageMagick/ImageMagick6
 
 OS: Alpine 3.10
 
