@@ -71,6 +71,7 @@ RUN apk update && \
 	    --without-perl \
 	    --disable-openmp \
 	    --with-gvc=no \
+	    --without-threads \
 	    --disable-docs && \
 	make -j$(nproc) && make install && \
 	ldconfig /usr/local/lib && \
