@@ -1,6 +1,6 @@
 FROM golang:1.12-alpine3.10
 
-ENV OPENCV_VERSION=4.1.1
+ENV OPENCV_VERSION=4.1.2
 ENV BUILD="ca-certificates \
          musl \
          alpine-sdk \
@@ -20,7 +20,6 @@ ENV DEV="binutils \
          openblas-dev musl-dev libjpeg-turbo-dev \
          libpng-dev tiff-dev"
 ENV IMG_MAGICK_DEV="jpeg-dev tiff-dev giflib-dev glib-dev libx11-dev lcms2-dev patch"
-
 ENV PKG_CONFIG_PATH /usr/local/lib64/pkgconfig
 ENV LD_LIBRARY_PATH /usr/local/lib64
 ENV CGO_CPPFLAGS -I/usr/local/include
@@ -32,6 +31,9 @@ COPY ufraw.patch /
 RUN apk update && \
     apk add --no-cache ${BUILD} ${IMG_MAGICK_BUILD} && \
     apk add --virtual dev-dependencies --no-cache ${DEV} ${IMG_MAGICK_DEV} && \
+    # Fix libpng and xlocale.h path
+    ln -vfs /usr/include/libpng16 /usr/include/libpng && \
+    ln -vfs /usr/include/locale.h /usr/include/xlocale.h && \
     mkdir /tmp/opencv && \
     cd /tmp/opencv && \
     wget -O opencv.zip https://github.com/opencv/opencv/archive/${OPENCV_VERSION}.zip && \
@@ -42,6 +44,8 @@ RUN apk update && \
     cmake \
     -D CMAKE_BUILD_TYPE=RELEASE \
     -D CMAKE_INSTALL_PREFIX=/usr/local \
+    -D CMAKE_C_COMPILER=/usr/bin/clang \
+    -D CMAKE_CXX_COMPILER=/usr/bin/clang++ \
     -D OPENCV_EXTRA_MODULES_PATH=/tmp/opencv/opencv_contrib-${OPENCV_VERSION}/modules \
     -D INSTALL_C_EXAMPLES=NO \
     -D INSTALL_PYTHON_EXAMPLES=NO \
